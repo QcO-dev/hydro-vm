@@ -140,7 +140,62 @@ void execute(CPU* cpu, uint8_t instruction) {
 				uint32_t val1 = getRegisiter(cpu, reg1);
 				uint32_t val2 = getRegisiter(cpu, reg2);
 
-				setRegister(cpu, REG_ACC, val1 + val2);
+				uint32_t val = val1 + val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				if (!val) {
+
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+				break;
+			}
+
+		case SUB_REG_REG: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 - val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				printf("\nVAL: %08X\n", val);
+
+				if (val == 0) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+				break;
+			}
+
+		case JMP: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				setRegister(cpu, REG_IP, memAddress);
+
+				break;
+			}
+
+		case JNE: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				if (!(getRegisiter(cpu, REG_FLAGS) & 0x10)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
 
 				break;
 			}
