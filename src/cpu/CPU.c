@@ -54,6 +54,20 @@ uint32_t fetch32(CPU *cpu) {
 	return instruction;
 }
 
+void updateFlagsRegisterUnsigned(CPU* cpu, uint32_t val, uint32_t val1, uint32_t val2) {
+	if (val == 0) {
+		uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+		setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+	}
+
+	if (val1 < val2) {
+		uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+		setRegister(cpu, REG_FLAGS, flags | 0x00000100);
+	}
+}
+
 void execute(CPU* cpu, uint8_t instruction) {
 
 	switch (instruction) {
@@ -169,13 +183,7 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				setRegister(cpu, REG_ACC, val);
 
-				printf("\nVAL: %08X\n", val);
-
-				if (val == 0) {
-					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
-
-					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
-				}
+				updateFlagsRegisterUnsigned(cpu, val, val1, val2);
 
 				break;
 			}
@@ -241,15 +249,146 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 		case JEQ_REG: {
 
+			uint8_t reg = fetch(cpu);
+
+			//TODO CHECK
+
+			uint32_t memAddress = getRegisiter(cpu, reg);
+
+			if (getRegisiter(cpu, REG_FLAGS) & 0x10) {
+				setRegister(cpu, REG_IP, memAddress);
+			}
+
+			break;
+		}
+
+		case JL_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				if (getRegisiter(cpu, REG_FLAGS) & 0x100) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+		}
+
+		case JL_REG: {
 				uint8_t reg = fetch(cpu);
 
 				//TODO CHECK
 
 				uint32_t memAddress = getRegisiter(cpu, reg);
 
-				if (getRegisiter(cpu, REG_FLAGS) & 0x10) {
+				if (getRegisiter(cpu, REG_FLAGS) & 0x100) {
 					setRegister(cpu, REG_IP, memAddress);
 				}
+
+				break;
+			}
+
+		case JG_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+				if (!(flags & 0x10) && !(flags & 0x100)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+
+			}
+
+		case JG_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+				if (!(flags & 0x10) && !(flags & 0x100)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+
+			}
+
+		case JLE_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+				if (flags & 0x10 || flags & 0x100) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JLE_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+				if (flags & 0x10 || flags & 0x100) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JGE_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				if (!(getRegisiter(cpu, REG_FLAGS) & 0x100)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JGE_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				if (!(getRegisiter(cpu, REG_FLAGS) & 0x100)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case CMP_REG_REG: { // Subtraction without changing the ACC register
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 - val2;
+
+				updateFlagsRegisterUnsigned(cpu, val, val1, val2);
 
 				break;
 			}
