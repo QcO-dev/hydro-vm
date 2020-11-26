@@ -38,7 +38,7 @@ int main() {
 
 	uint8_t mCode[] = {
 		MOV_LIT_REG, 0x10, 0x00, 0x00, 0x00, REG_R1,
-		MOV_LIT_REG, 0x02, 0x00, 0x00, 0x00, REG_R2,
+		MOV_LIT_REG, 0x03, 0x00, 0x00, 0x00, REG_R2,
 
 		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R3,
 
@@ -47,7 +47,7 @@ int main() {
 		SUB_REG_REG, REG_R2, REG_R3,
 		MOV_REG_REG, REG_ACC, REG_R2,
 
-		JNE, 18, 0x00, 0x00, 0x00,
+		JNE_LIT, 18, 0x00, 0x00, 0x00,
 
 		HLT
 	};
@@ -58,7 +58,7 @@ int main() {
 	printRegisters(cpu);
 	printMemory(cpu, 0xff00);
 
-	while (!(getRegisiter(cpu, REG_FLAGS) & 0x1)) {
+	while (!(getRegisiter(cpu, REG_FLAGS) & 0x1)) { // Get the HLT Bit of the Flags register
 		step(cpu);
 		printRegisters(cpu);
 		printMemory(cpu, 0xff00);
