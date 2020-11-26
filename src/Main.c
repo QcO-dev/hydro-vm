@@ -37,22 +37,23 @@ int main() {
 	CPU* cpu = createCPU(mem);
 
 	uint8_t mCode[] = {
-		MOV_LIT_REG, 0x10, 0x00, 0x00, 0x00, REG_R1,
-		MOV_LIT_REG, 0x03, 0x00, 0x00, 0x00, REG_R2,
-
-		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R3,
-
-		ADD_REG_REG, REG_R4, REG_R1,
-		MOV_REG_REG, REG_ACC, REG_R4,
-		SUB_REG_REG, REG_R2, REG_R3,
-		MOV_REG_REG, REG_ACC, REG_R2,
-
-		JNE_LIT, 18, 0x00, 0x00, 0x00,
-
+		MOV_LIT_REG, 0x03, 0x00, 0x00, 0x00, REG_R1,
+		MOV_LIT_REG, 0x02, 0x00, 0x00, 0x00, REG_R2,
+		CMP_REG_REG, REG_R1, REG_R2,
+		JGE_LIT, 0x00, 0x10, 0x00, 0x00,
 		HLT
 	};
 
+	//TODO Greater than or equal / Less than or equal
+
 	memcpy(mem, mCode, sizeof(mCode));
+
+	uint8_t jmpCode[] = {
+		MOV_LIT_REG, 0xff, 0xff, 0xff, 0xff, REG_R3,
+		HLT
+	};
+
+	memcpy(mem + 0x1000, jmpCode, sizeof(jmpCode));
 
 
 	printRegisters(cpu);
