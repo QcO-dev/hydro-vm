@@ -180,7 +180,7 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
-		case JMP: {
+		case JMP_LIT: {
 
 				uint32_t memAddress = fetch32(cpu);
 
@@ -189,11 +189,65 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
-		case JNE: {
+		case JMP_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				setRegister(cpu, REG_IP, memAddress);
+
+				break;
+			}
+
+		case JNE_LIT: {
 
 				uint32_t memAddress = fetch32(cpu);
 
 				if (!(getRegisiter(cpu, REG_FLAGS) & 0x10)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JNE_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				if (!(getRegisiter(cpu, REG_FLAGS) & 0x10)) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JEQ_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				if (getRegisiter(cpu, REG_FLAGS) & 0x10) {
+					setRegister(cpu, REG_IP, memAddress);
+				}
+
+				break;
+			}
+
+		case JEQ_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				if (getRegisiter(cpu, REG_FLAGS) & 0x10) {
 					setRegister(cpu, REG_IP, memAddress);
 				}
 
