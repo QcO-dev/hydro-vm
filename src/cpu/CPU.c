@@ -661,7 +661,44 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
-		
+		case INC_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t value = getRegisiter(cpu, reg);
+
+				setRegister(cpu, reg, value + 1);
+
+				if (!(value + 1)) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+				break;
+			}
+
+		case DEC_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t value = getRegisiter(cpu, reg);
+
+				setRegister(cpu, reg, value - 1);
+
+				if (!(value - 1)) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+
+				break;
+			}
 
 		case HLT: {
 				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
