@@ -34,26 +34,26 @@ int main() {
 
 	uint8_t* mem = createMemory(MAX_RAM);
 
+	if (mem == NULL) {
+		fprintf(stderr, "Failed to allocate memory block.\n");
+		return -1;
+	}
+
 	CPU* cpu = createCPU(mem);
 
+	if (mem == NULL) {
+		fprintf(stderr, "Failed to allocate memory block.\n");
+		return -1;
+	}
+
 	uint8_t mCode[] = {
-		MOV_LIT_REG, 0x03, 0x00, 0x00, 0x00, REG_R1,
-		MOV_LIT_REG, 0x02, 0x00, 0x00, 0x00, REG_R2,
-		CMP_REG_REG, REG_R1, REG_R2,
-		JGE_LIT, 0x00, 0x10, 0x00, 0x00,
+		MOV_LIT_REG, 0x10, 0x00, 0x00, 0x00, REG_R1,
+		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R2,
+		RSH_REG_REG, REG_R1, REG_R2,
 		HLT
 	};
-
-	//TODO Greater than or equal / Less than or equal
 
 	memcpy(mem, mCode, sizeof(mCode));
-
-	uint8_t jmpCode[] = {
-		MOV_LIT_REG, 0xff, 0xff, 0xff, 0xff, REG_R3,
-		HLT
-	};
-
-	memcpy(mem + 0x1000, jmpCode, sizeof(jmpCode));
 
 
 	printRegisters(cpu);
