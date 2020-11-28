@@ -10,16 +10,15 @@ struct cpu_t* createCPU(uint8_t* memory) {
 	struct cpu_t *cpu = malloc(sizeof(struct cpu_t));
 
 	if (cpu == NULL) {
-		//TODO
-		return;
+		return cpu;
 	}
 
 	cpu->memory = memory;
 
-	cpu->regisiters = createMemory(REG_COUNT * 4); // Each register is 32 Bits, or 4 bytes
+	cpu->regisiters = calloc(REG_COUNT, 4); // Each register is 32 Bits, or 4 bytes
 
-	for (int i = 0; i < REG_COUNT * 4; i++) {
-		cpu->regisiters[i] = 0;
+	if (cpu->regisiters == NULL) {
+		return NULL;
 	}
 
 	return cpu;
@@ -143,6 +142,40 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
+		case MOV_REG_PTR_REG: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				//TODO ERROR
+
+				uint8_t reg2 = fetch(cpu);
+
+				uint32_t memAddress = getRegisiter(cpu, reg1);
+
+				uint32_t value = mem_getU32(cpu->memory, memAddress);
+
+				setRegister(cpu, reg2, value);
+
+				break;
+			}
+
+		case MOV_REG_PTR_MEM: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				//TODO ERROR
+
+				uint32_t memAddressDest = fetch32(cpu);
+
+				uint32_t memAddress = getRegisiter(cpu, reg1);
+
+				uint32_t value = mem_getU32(cpu->memory, memAddress);
+
+				mem_setU32(cpu->memory, memAddressDest, value);
+
+				break;
+			}
+
 		case ADD_REG_REG: {
 
 				uint8_t reg1 = fetch(cpu);
@@ -159,7 +192,29 @@ void execute(CPU* cpu, uint8_t instruction) {
 				setRegister(cpu, REG_ACC, val);
 
 				if (!val) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
 
+					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+				break;
+			}
+
+		case ADD_REG_LIT: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 + val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				if (!val) {
 					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
 
 					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
@@ -178,6 +233,25 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				uint32_t val1 = getRegisiter(cpu, reg1);
 				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 - val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				updateFlagsRegisterUnsigned(cpu, val, val1, val2);
+
+				break;
+			}
+
+		case SUB_REG_LIT: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
 
 				uint32_t val = val1 - val2;
 
@@ -392,6 +466,202 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				break;
 			}
+
+		case CMP_REG_LIT: {
+
+				uint8_t reg = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg);
+
+				uint32_t val = val1 - val2;
+
+				updateFlagsRegisterUnsigned(cpu, val, val1, val2);
+
+				break;
+			}
+
+		case OR_REG_REG: {
+			uint8_t reg1 = fetch(cpu);
+
+			uint8_t reg2 = fetch(cpu);
+
+			//TODO CHECKS
+
+			uint32_t val1 = getRegisiter(cpu, reg1);
+			uint32_t val2 = getRegisiter(cpu, reg2);
+
+			uint32_t val = val1 | val2;
+
+			setRegister(cpu, REG_ACC, val);
+
+			break;
+		}
+
+		case OR_REG_LIT: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 | val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case AND_REG_REG: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 & val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case AND_REG_LIT: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 & val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case XOR_REG_REG: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 ^ val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case XOR_REG_LIT: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 ^ val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case LSH_REG_REG: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 << val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case LSH_REG_LIT: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 << val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case RSH_REG_REG: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+				uint32_t val2 = getRegisiter(cpu, reg2);
+
+				uint32_t val = val1 >> val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case RSH_REG_LIT: {
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t val2 = fetch32(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val1 = getRegisiter(cpu, reg1);
+
+				uint32_t val = val1 >> val2;
+
+				setRegister(cpu, REG_ACC, val);
+
+				break;
+			}
+
+		case NOT_REG: {
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t val = getRegisiter(cpu, reg);
+
+				setRegister(cpu, REG_ACC, ~val);
+
+				break;
+			}
+
+		
 
 		case HLT: {
 				uint32_t flags = getRegisiter(cpu, REG_FLAGS);

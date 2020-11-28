@@ -4,8 +4,8 @@
 #define MOV_REG_MEM 0x12
 #define MOV_MEM_REG 0x13
 #define MOV_LIT_MEM 0x14
-#define ADD_REG_REG 0x15
-#define SUB_REG_REG 0x16
+#define MOV_REG_PTR_REG 0x15
+#define MOV_REG_PTR_MEM 0x16
 #define JMP_LIT 0x17
 #define JMP_REG 0x18
 #define JNE_LIT 0x19
@@ -21,4 +21,22 @@
 #define JGE_LIT 0x23
 #define JGE_REG 0x24
 #define CMP_REG_REG 0x25
+#define CMP_REG_LIT 0x26
+#define ADD_REG_REG 0x27
+#define ADD_REG_LIT 0x28
+#define SUB_REG_REG 0x29
+#define SUB_REG_LIT 0x2a
+#define OR_REG_REG 0x2b
+#define OR_REG_LIT 0x2c
+#define AND_REG_REG 0x2d
+#define AND_REG_LIT 0x2e
+#define XOR_REG_REG 0x2f
+#define XOR_REG_LIT 0x30
+#define NOT_REG 0x31
+#define LSH_REG_REG 0x32
+#define LSH_REG_LIT 0x33
+#define RSH_REG_REG 0x34
+#define RSH_REG_LIT 0x35
 #define HLT 0xff
+
+//TODO Left shift + right shift and also XXX_REG_LIT options
