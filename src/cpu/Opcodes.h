@@ -37,6 +37,8 @@
 #define LSH_REG_LIT 0x33
 #define RSH_REG_REG 0x34
 #define RSH_REG_LIT 0x35
+#define INC_REG 0x36
+#define DEC_REG 0x37
 #define HLT 0xff
 
 //TODO Left shift + right shift and also XXX_REG_LIT options

@@ -47,9 +47,8 @@ int main() {
 	}
 
 	uint8_t mCode[] = {
-		MOV_LIT_REG, 0x10, 0x00, 0x00, 0x00, REG_R1,
-		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R2,
-		RSH_REG_REG, REG_R1, REG_R2,
+		MOV_LIT_REG, 0x02, 0x00, 0x00, 0x00, REG_R1,
+		DEC_REG, REG_R1,
 		HLT
 	};
 
