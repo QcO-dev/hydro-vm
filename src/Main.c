@@ -20,6 +20,7 @@ void printRegisters(CPU* cpu) {
 	printf("ACC: %08X\n", getRegisiter(cpu, REG_ACC));
 	printf("FLAGS: %08X\n", getRegisiter(cpu, REG_FLAGS));
 	printf("SP: %08X\n", getRegisiter(cpu, REG_SP));
+	printf("FP: %08X\n", getRegisiter(cpu, REG_FP));
 
 }
 
@@ -32,7 +33,7 @@ void printMemory(CPU* cpu, uint32_t address, int values) {
 
 }
 
-int main() {
+int main(int argc, char** argv) {
 
 	uint8_t* mem = createMemory(MAX_RAM);
 
@@ -49,28 +50,49 @@ int main() {
 	}
 
 	uint8_t mCode[] = {
-		PSH_LIT, 0x00, 0x00, 0x00, 0x00,
+		PSH_LIT, 0x03, 0x00, 0x00, 0x00,
+		PSH_LIT, 0x02, 0x00, 0x00, 0x00,
+		PSH_LIT, 0x01, 0x00, 0x00, 0x00,
+
+		PSH_LIT, 0x03, 0x00, 0x00, 0x00,
 		CAL_LIT, 0x00, 0x30, 0x00, 0x00,
+		MOV_REG_REG, REG_ACC, REG_R8,
 		HLT
 	};
 
 	memcpy(mem, mCode, sizeof(mCode));
 
-	uint8_t subR[] = {
-		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R1,
-		MOV_REG_REG, REG_R1, REG_ACC,
+	uint8_t subR[] = {	
+		MOV_REG_PTR_OFF_REG, REG_FP, 44, 0x00, 0x00, 0x00, REG_R1,
+		
+		ADD_REG_LIT, REG_FP, 44, 0x00, 0x00, 0x00,
+		MOV_REG_REG, REG_ACC, REG_SP,
+		
+		MOV_LIT_REG, 0x00, 0x00, 0x00, 0x00, REG_R3,
+
+		CMP_REG_LIT, REG_R1, 0x00, 0x00, 0x00, 0x00,
+		JEQ_LIT, 0x30, 0x30, 0x00, 0x00,
+		POP_REG, REG_R2,
+		ADD_REG_REG, REG_R3, REG_R2,
+		MOV_REG_REG, REG_ACC, REG_R3,
+		SUB_REG_LIT, REG_R1, 0x01, 0x00, 0x00, 0x00,
+		MOV_REG_REG, REG_ACC, REG_R1,
+		JMP_LIT, 23, 0x30, 0x00, 0x00,
+		// End
+
+		MOV_REG_REG, REG_R3, REG_ACC,
 		RET
 	};
 
 	memcpy(mem + 0x3000, subR, sizeof(subR));
 
 	printRegisters(cpu);
-	printMemory(cpu, MAX_RAM - (32 * 4), 32);
+	printMemory(cpu, 0xffc8, 32);
 
 	while (!(getRegisiter(cpu, REG_FLAGS) & 0x1)) { // Get the HLT Bit of the Flags register
 		step(cpu);
 		printRegisters(cpu);
-		printMemory(cpu, MAX_RAM - (32 * 4), 32);
+		printMemory(cpu, 0xffc8, 32);
 	}
 
 	free(cpu);

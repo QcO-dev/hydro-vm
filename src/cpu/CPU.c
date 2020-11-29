@@ -197,6 +197,25 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
+		case MOV_REG_PTR_OFF_REG: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint32_t offset = fetch32(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t memAddress = getRegisiter(cpu, reg1);
+
+				uint32_t value = mem_getU32(cpu->memory, memAddress + offset);
+
+				setRegister(cpu, reg2, value);
+
+				break;
+			}
+
 		case ADD_REG_REG: {
 
 				uint8_t reg1 = fetch(cpu);
@@ -788,7 +807,7 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				push(cpu, (argCount + 9) * 4 + 4); // Frame size
 
-				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_SP) - 4);
+				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_SP));
 
 				setRegister(cpu, REG_IP, memAddress);
 
@@ -827,7 +846,7 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 		case RET: {
 			
-				setRegister(cpu, REG_SP, getRegisiter(cpu, REG_FP) + 4);
+				setRegister(cpu, REG_SP, getRegisiter(cpu, REG_FP));
 
 				uint32_t frameSize = pop(cpu);
 
@@ -848,8 +867,6 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				break;
 			}
-
-
 
 		case HLT: {
 				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
