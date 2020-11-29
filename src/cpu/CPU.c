@@ -86,6 +86,8 @@ uint32_t pop(CPU* cpu) {
 	uint32_t memAddress = getRegisiter(cpu, REG_SP);
 
 	uint32_t value = mem_getU32(cpu->memory, memAddress);
+
+	return value;
 }
 
 void execute(CPU* cpu, uint8_t instruction) {

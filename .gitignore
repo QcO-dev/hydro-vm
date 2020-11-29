@@ -1,4 +1,6 @@
 /Debug
+/Release
+/test
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
