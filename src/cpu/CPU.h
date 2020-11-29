@@ -7,7 +7,7 @@ typedef struct cpu_t {
 	uint8_t* regisiters;
 } CPU;
 
-CPU* createCPU(uint8_t* memory);
+CPU* createCPU(uint8_t* memory, uint32_t stackPointer);
 
 void step(CPU* cpu);
 

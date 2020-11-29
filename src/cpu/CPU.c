@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct cpu_t* createCPU(uint8_t* memory) {
+void setRegister(CPU* cpu, int regIndex, uint32_t value);
+
+struct cpu_t* createCPU(uint8_t* memory, uint32_t stackPointer) {
 	struct cpu_t *cpu = malloc(sizeof(struct cpu_t));
 
 	if (cpu == NULL) {
@@ -15,11 +17,14 @@ struct cpu_t* createCPU(uint8_t* memory) {
 
 	cpu->memory = memory;
 
-	cpu->regisiters = calloc(REG_COUNT, 4); // Each register is 32 Bits, or 4 bytes
+	cpu->regisiters = calloc(REG_COUNT, REG_OFFSET); // Each register is 32 Bits, or 4 bytes
 
 	if (cpu->regisiters == NULL) {
 		return NULL;
 	}
+
+	setRegister(cpu, REG_SP, stackPointer);
+	setRegister(cpu, REG_FP, stackPointer);
 
 	return cpu;
 }
@@ -65,6 +70,22 @@ void updateFlagsRegisterUnsigned(CPU* cpu, uint32_t val, uint32_t val1, uint32_t
 
 		setRegister(cpu, REG_FLAGS, flags | 0x00000100);
 	}
+}
+
+void push(CPU* cpu, uint32_t value) {
+	uint32_t memAddress = getRegisiter(cpu, REG_SP);
+
+	mem_setU32(cpu->memory, memAddress, value);
+
+	setRegister(cpu, REG_SP, getRegisiter(cpu, REG_SP) - 4);
+}
+
+uint32_t pop(CPU* cpu) {
+	setRegister(cpu, REG_SP, getRegisiter(cpu, REG_SP) + 4);
+
+	uint32_t memAddress = getRegisiter(cpu, REG_SP);
+
+	uint32_t value = mem_getU32(cpu->memory, memAddress);
 }
 
 void execute(CPU* cpu, uint8_t instruction) {
@@ -197,6 +218,13 @@ void execute(CPU* cpu, uint8_t instruction) {
 					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
 				}
 
+				// if val1 is not 0 and val2 is not 0 but val is, overflow must have occurred.
+				if (val1 != 0 && val2 != 0 && val == 0) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000100);
+				}
+
 				break;
 			}
 
@@ -218,6 +246,12 @@ void execute(CPU* cpu, uint8_t instruction) {
 					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
 
 					setRegister(cpu, REG_FLAGS, flags | 0x00000010);
+				}
+
+				if (val1 != 0 && val2 != 0 && val == 0) {
+					uint32_t flags = getRegisiter(cpu, REG_FLAGS);
+
+					setRegister(cpu, REG_FLAGS, flags | 0x00000100);
 				}
 
 				break;
@@ -699,6 +733,123 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 				break;
 			}
+
+		case PSH_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t value = getRegisiter(cpu, reg);
+
+				push(cpu, value);
+
+				break;
+			}
+
+		case PSH_LIT: {
+
+				uint32_t value = fetch32(cpu);
+
+				push(cpu, value);
+
+				break;
+			}
+
+		case POP_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t value = pop(cpu);
+
+				setRegister(cpu, reg, value);
+
+				break;
+			}
+
+		case CAL_LIT: {
+
+				uint32_t memAddress = fetch32(cpu);
+
+				uint32_t argCount = mem_getU32(cpu->memory, getRegisiter(cpu, REG_SP) + 4);
+
+				push(cpu, getRegisiter(cpu, REG_R1));
+				push(cpu, getRegisiter(cpu, REG_R2));
+				push(cpu, getRegisiter(cpu, REG_R3));
+				push(cpu, getRegisiter(cpu, REG_R4));
+				push(cpu, getRegisiter(cpu, REG_R5));
+				push(cpu, getRegisiter(cpu, REG_R6));
+				push(cpu, getRegisiter(cpu, REG_R7));
+				push(cpu, getRegisiter(cpu, REG_R8));
+
+				push(cpu, getRegisiter(cpu, REG_IP));
+
+				push(cpu, (argCount + 9) * 4 + 4); // Frame size
+
+				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_SP) - 4);
+
+				setRegister(cpu, REG_IP, memAddress);
+
+				break;
+			}
+
+		case CAL_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO CHECK
+
+				uint32_t memAddress = getRegisiter(cpu, reg);
+
+				uint32_t argCount = mem_getU32(cpu->memory, getRegisiter(cpu, REG_SP) + 4);
+
+				push(cpu, getRegisiter(cpu, REG_R1));
+				push(cpu, getRegisiter(cpu, REG_R2));
+				push(cpu, getRegisiter(cpu, REG_R3));
+				push(cpu, getRegisiter(cpu, REG_R4));
+				push(cpu, getRegisiter(cpu, REG_R5));
+				push(cpu, getRegisiter(cpu, REG_R6));
+				push(cpu, getRegisiter(cpu, REG_R7));
+				push(cpu, getRegisiter(cpu, REG_R8));
+
+				push(cpu, getRegisiter(cpu, REG_IP));
+
+				push(cpu, (argCount + 9) * 4 + 4); // Frame size
+
+				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_SP) - 4);
+
+				setRegister(cpu, REG_IP, memAddress);
+
+				break;
+			}
+
+		case RET: {
+			
+				setRegister(cpu, REG_SP, getRegisiter(cpu, REG_FP) + 4);
+
+				uint32_t frameSize = pop(cpu);
+
+				uint32_t ip = pop(cpu);
+
+				setRegister(cpu, REG_R8, pop(cpu));
+				setRegister(cpu, REG_R7, pop(cpu));
+				setRegister(cpu, REG_R6, pop(cpu));
+				setRegister(cpu, REG_R5, pop(cpu));
+				setRegister(cpu, REG_R4, pop(cpu));
+				setRegister(cpu, REG_R3, pop(cpu));
+				setRegister(cpu, REG_R2, pop(cpu));
+				setRegister(cpu, REG_R1, pop(cpu));
+
+				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_FP) + frameSize);
+
+				setRegister(cpu, REG_IP, ip);
+
+				break;
+			}
+
+
 
 		case HLT: {
 				uint32_t flags = getRegisiter(cpu, REG_FLAGS);
