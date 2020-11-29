@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <memory/Memory.h>
 #include <cpu/CPU.h>
 #include <cpu/Registers.h>
@@ -6,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #define MAX_RAM 256 * 256
 #define STACK_POINTER_START MAX_RAM - 4
@@ -33,7 +36,57 @@ void printMemory(CPU* cpu, uint32_t address, int values) {
 
 }
 
+typedef struct {
+	uint8_t* content;
+	unsigned long length;
+	char error;
+} BFile;
+
+BFile readFile(char* fileName) {
+	FILE* fileptr;
+	uint8_t* buffer;
+	unsigned long filelen;
+
+	fileptr = fopen(fileName, "rb");
+
+	if (fileptr == NULL) {
+		fprintf(stderr, "Failed opening %s: %s", fileName, strerror(errno));
+		BFile file = { NULL, 0, 1 };
+		return file;
+	}
+
+	fseek(fileptr, 0, SEEK_END);
+	filelen = ftell(fileptr);
+	rewind(fileptr);
+
+	buffer = malloc(filelen);
+
+	if (buffer == NULL) {
+		fprintf(stderr, "Failed to allocate memory block.\n");
+		BFile file = { NULL, 0, 1 };
+		return file;
+	}
+
+	fread(buffer, filelen, 1, fileptr);
+	fclose(fileptr);
+
+	BFile file = {buffer, filelen};
+
+	return file;
+}
+
 int main(int argc, char** argv) {
+
+	if (argc != 2) {
+		fprintf(stderr, "Expected one argument, got %d.", argc - 1);
+		return - 1;
+	}
+
+	BFile file = readFile(argv[1]);
+
+	if (file.error) {
+		return -1;
+	}
 
 	uint8_t* mem = createMemory(MAX_RAM);
 
@@ -49,53 +102,25 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	uint8_t mCode[] = {
-		PSH_LIT, 0x03, 0x00, 0x00, 0x00,
-		PSH_LIT, 0x02, 0x00, 0x00, 0x00,
-		PSH_LIT, 0x01, 0x00, 0x00, 0x00,
+	memcpy(mem, file.content, file.length);
 
-		PSH_LIT, 0x03, 0x00, 0x00, 0x00,
-		CAL_LIT, 0x00, 0x30, 0x00, 0x00,
-		MOV_REG_REG, REG_ACC, REG_R8,
-		HLT
-	};
-
-	memcpy(mem, mCode, sizeof(mCode));
-
-	uint8_t subR[] = {	
-		MOV_REG_PTR_OFF_REG, REG_FP, 44, 0x00, 0x00, 0x00, REG_R1,
-		
-		ADD_REG_LIT, REG_FP, 44, 0x00, 0x00, 0x00,
-		MOV_REG_REG, REG_ACC, REG_SP,
-		
-		MOV_LIT_REG, 0x00, 0x00, 0x00, 0x00, REG_R3,
-
-		CMP_REG_LIT, REG_R1, 0x00, 0x00, 0x00, 0x00,
-		JEQ_LIT, 0x30, 0x30, 0x00, 0x00,
-		POP_REG, REG_R2,
-		ADD_REG_REG, REG_R3, REG_R2,
-		MOV_REG_REG, REG_ACC, REG_R3,
-		SUB_REG_LIT, REG_R1, 0x01, 0x00, 0x00, 0x00,
-		MOV_REG_REG, REG_ACC, REG_R1,
-		JMP_LIT, 23, 0x30, 0x00, 0x00,
-		// End
-
-		MOV_REG_REG, REG_R3, REG_ACC,
-		RET
-	};
-
-	memcpy(mem + 0x3000, subR, sizeof(subR));
-
+#ifdef _DEBUG
 	printRegisters(cpu);
 	printMemory(cpu, 0xffc8, 32);
+#endif
 
 	while (!(getRegisiter(cpu, REG_FLAGS) & 0x1)) { // Get the HLT Bit of the Flags register
 		step(cpu);
+#ifdef _DEBUG
 		printRegisters(cpu);
 		printMemory(cpu, 0xffc8, 32);
+#endif
 	}
+
+	uint32_t returnValue = getRegisiter(cpu, REG_ACC);
 
 	free(cpu);
 	free(mem);
 	
+	return returnValue;
 }
