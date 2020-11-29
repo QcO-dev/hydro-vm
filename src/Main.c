@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MAX_RAM 256 * 256 // 64KB
+#define MAX_RAM 256 * 256
+#define STACK_POINTER_START MAX_RAM - 4
 
 void printRegisters(CPU* cpu) {
 
@@ -18,13 +19,14 @@ void printRegisters(CPU* cpu) {
 	printf("R4: %08X\n", getRegisiter(cpu, REG_R4));
 	printf("ACC: %08X\n", getRegisiter(cpu, REG_ACC));
 	printf("FLAGS: %08X\n", getRegisiter(cpu, REG_FLAGS));
+	printf("SP: %08X\n", getRegisiter(cpu, REG_SP));
 
 }
 
-void printMemory(CPU* cpu, uint32_t address) {
+void printMemory(CPU* cpu, uint32_t address, int values) {
 
-	for (int i = 0; i < 8 * 4; i++) {
-		printf("%02X", cpu->memory[address + i]);
+	for (int i = 0; i < values * 4; i += 4) {
+		printf("%08X ", mem_getU32(cpu->memory, address + i));
 	}
 	printf("\n");
 
@@ -39,7 +41,7 @@ int main() {
 		return -1;
 	}
 
-	CPU* cpu = createCPU(mem);
+	CPU* cpu = createCPU(mem, STACK_POINTER_START);
 
 	if (mem == NULL) {
 		fprintf(stderr, "Failed to allocate memory block.\n");
@@ -47,21 +49,28 @@ int main() {
 	}
 
 	uint8_t mCode[] = {
-		MOV_LIT_REG, 0x02, 0x00, 0x00, 0x00, REG_R1,
-		DEC_REG, REG_R1,
+		PSH_LIT, 0x00, 0x00, 0x00, 0x00,
+		CAL_LIT, 0x00, 0x30, 0x00, 0x00,
 		HLT
 	};
 
 	memcpy(mem, mCode, sizeof(mCode));
 
+	uint8_t subR[] = {
+		MOV_LIT_REG, 0x01, 0x00, 0x00, 0x00, REG_R1,
+		MOV_REG_REG, REG_R1, REG_ACC,
+		RET
+	};
+
+	memcpy(mem + 0x3000, subR, sizeof(subR));
 
 	printRegisters(cpu);
-	printMemory(cpu, 0xff00);
+	printMemory(cpu, MAX_RAM - (32 * 4), 32);
 
 	while (!(getRegisiter(cpu, REG_FLAGS) & 0x1)) { // Get the HLT Bit of the Flags register
 		step(cpu);
 		printRegisters(cpu);
-		printMemory(cpu, 0xff00);
+		printMemory(cpu, MAX_RAM - (32 * 4), 32);
 	}
 
 	free(cpu);
