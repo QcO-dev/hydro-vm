@@ -14,5 +14,3 @@
 #define REG_SP 10
 #define REG_FP 11
 #define REG_FLAGS 12
-
-//TODO cal and ret instructions with stack frames
