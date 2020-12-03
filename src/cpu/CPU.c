@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cpu/Interrupt.h>
 
 void setRegister(CPU* cpu, int regIndex, uint32_t value);
 
@@ -20,6 +21,12 @@ struct cpu_t* createCPU(uint8_t* memory, uint32_t stackPointer) {
 	cpu->regisiters = calloc(REG_COUNT, REG_OFFSET); // Each register is 32 Bits, or 4 bytes
 
 	if (cpu->regisiters == NULL) {
+		return NULL;
+	}
+
+	cpu->interruptTable = buildInterruptTable();
+
+	if (cpu->interruptTable == NULL) {
 		return NULL;
 	}
 
@@ -204,6 +211,27 @@ void execute(CPU* cpu, uint8_t instruction) {
 				uint8_t reg1 = fetch(cpu);
 
 				uint32_t offset = fetch32(cpu);
+
+				uint8_t reg2 = fetch(cpu);
+
+				//TODO CHECKS
+
+				uint32_t memAddress = getRegisiter(cpu, reg1);
+
+				uint32_t value = mem_getU32(cpu->memory, memAddress + offset);
+
+				setRegister(cpu, reg2, value);
+
+				break;
+			}
+
+		case MOV_REG_PTR_OFF_REG_REG: {
+
+				uint8_t reg1 = fetch(cpu);
+
+				uint8_t offsetReg = fetch(cpu);
+
+				uint32_t offset = getRegisiter(cpu, offsetReg);
 
 				uint8_t reg2 = fetch(cpu);
 
@@ -866,6 +894,17 @@ void execute(CPU* cpu, uint8_t instruction) {
 				setRegister(cpu, REG_FP, getRegisiter(cpu, REG_FP) + frameSize);
 
 				setRegister(cpu, REG_IP, ip);
+
+				break;
+			}
+
+		case INT_LIT: {
+
+				uint32_t intr = fetch32(cpu);
+
+				interrupt func = cpu->interruptTable[intr];
+
+				func(cpu);
 
 				break;
 			}
