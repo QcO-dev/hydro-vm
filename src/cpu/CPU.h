@@ -17,4 +17,6 @@ void step(CPU* cpu);
 
 uint32_t getRegisiter(CPU* cpu, int regIndex);
 
+void setRegister(CPU* cpu, int regIndex, uint32_t value);
+
 uint32_t pop(CPU* cpu);
