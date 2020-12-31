@@ -246,6 +246,23 @@ void execute(CPU* cpu, uint8_t instruction) {
 				break;
 			}
 
+		case MOV_REG_REG_PTR: {
+
+				uint8_t reg = fetch(cpu);
+
+				//TODO
+
+				uint32_t val = getRegisiter(cpu, reg);
+
+				uint8_t regPtr = fetch(cpu);
+
+				uint32_t memAddress = getRegisiter(cpu, regPtr);
+
+				mem_setU32(cpu->memory, memAddress, val);
+
+				break;
+			}
+
 		case ADD_REG_REG: {
 
 				uint8_t reg1 = fetch(cpu);
@@ -900,7 +917,20 @@ void execute(CPU* cpu, uint8_t instruction) {
 
 		case INT_LIT: {
 
-				uint32_t intr = fetch32(cpu);
+				uint8_t intr = fetch(cpu);
+
+				interrupt func = cpu->interruptTable[intr];
+
+				func(cpu);
+
+				break;
+			}
+
+		case INT_REG: {
+
+				uint8_t reg = fetch(cpu);
+
+				uint32_t intr = getRegisiter(cpu, reg);
 
 				interrupt func = cpu->interruptTable[intr];
 
